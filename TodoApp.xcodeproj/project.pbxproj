@@ -17,6 +17,8 @@
 		36B10EB52F84E7100066A1CB /* TodoAppTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 36B10EB42F84E7100066A1CB /* TodoAppTests.m */; };
 		36B10EBF2F84E7100066A1CB /* TodoAppUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 36B10EBE2F84E7100066A1CB /* TodoAppUITests.m */; };
 		36B10EC12F84E7100066A1CB /* TodoAppUITestsLaunchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 36B10EC02F84E7100066A1CB /* TodoAppUITestsLaunchTests.m */; };
+		36B10ED02F84F3C50066A1CB /* Task.m in Sources */ = {isa = PBXBuildFile; fileRef = 36B10ECF2F84F3C50066A1CB /* Task.m */; };
+		36B10ED42F84F4A80066A1CB /* CustomTaskTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 36B10ED32F84F4A80066A1CB /* CustomTaskTableViewCell.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,6 +56,10 @@
 		36B10EBA2F84E7100066A1CB /* TodoAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TodoAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		36B10EBE2F84E7100066A1CB /* TodoAppUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TodoAppUITests.m; sourceTree = "<group>"; };
 		36B10EC02F84E7100066A1CB /* TodoAppUITestsLaunchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TodoAppUITestsLaunchTests.m; sourceTree = "<group>"; };
+		36B10ECE2F84F3C50066A1CB /* Task.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Task.h; sourceTree = "<group>"; };
+		36B10ECF2F84F3C50066A1CB /* Task.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Task.m; sourceTree = "<group>"; };
+		36B10ED22F84F4A80066A1CB /* CustomTaskTableViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CustomTaskTableViewCell.h; sourceTree = "<group>"; };
+		36B10ED32F84F4A80066A1CB /* CustomTaskTableViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CustomTaskTableViewCell.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -104,6 +110,9 @@
 		36B10E972F84E70C0066A1CB /* TodoApp */ = {
 			isa = PBXGroup;
 			children = (
+				36B10ED92F852BAB0066A1CB /* userDefualt */,
+				36B10ED12F84F4630066A1CB /* customCell */,
+				36B10ECD2F84F3B40066A1CB /* model */,
 				36B10E982F84E70C0066A1CB /* AppDelegate.h */,
 				36B10E992F84E70C0066A1CB /* AppDelegate.m */,
 				36B10E9B2F84E70C0066A1CB /* SceneDelegate.h */,
@@ -134,6 +143,31 @@
 				36B10EC02F84E7100066A1CB /* TodoAppUITestsLaunchTests.m */,
 			);
 			path = TodoAppUITests;
+			sourceTree = "<group>";
+		};
+		36B10ECD2F84F3B40066A1CB /* model */ = {
+			isa = PBXGroup;
+			children = (
+				36B10ECE2F84F3C50066A1CB /* Task.h */,
+				36B10ECF2F84F3C50066A1CB /* Task.m */,
+			);
+			path = model;
+			sourceTree = "<group>";
+		};
+		36B10ED12F84F4630066A1CB /* customCell */ = {
+			isa = PBXGroup;
+			children = (
+				36B10ED22F84F4A80066A1CB /* CustomTaskTableViewCell.h */,
+				36B10ED32F84F4A80066A1CB /* CustomTaskTableViewCell.m */,
+			);
+			path = customCell;
+			sourceTree = "<group>";
+		};
+		36B10ED92F852BAB0066A1CB /* userDefualt */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = userDefualt;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -266,8 +300,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				36B10ED02F84F3C50066A1CB /* Task.m in Sources */,
 				36B10EA02F84E70C0066A1CB /* ViewController.m in Sources */,
 				36B10E9A2F84E70C0066A1CB /* AppDelegate.m in Sources */,
+				36B10ED42F84F4A80066A1CB /* CustomTaskTableViewCell.m in Sources */,
 				36B10EAB2F84E70F0066A1CB /* main.m in Sources */,
 				36B10E9D2F84E70C0066A1CB /* SceneDelegate.m in Sources */,
 			);
