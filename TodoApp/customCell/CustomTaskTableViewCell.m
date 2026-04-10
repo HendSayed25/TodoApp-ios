@@ -15,6 +15,12 @@
     
     self.priortyView.layer.cornerRadius = self.priortyView.frame.size.width / 2;
     self.priortyView.clipsToBounds = YES;
+    self.contentView.layer.borderWidth = 0.4;
+    self.contentView.layer.cornerRadius = 8.7;
+    self.contentView.layer.masksToBounds = YES;
+
+    CGFloat spacing = 8;
+    self.contentView.frame = CGRectInset(self.contentView.frame, spacing, spacing/2);
 }
 
 - (void)configureWithTask:(Task *)task {

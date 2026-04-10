@@ -110,7 +110,6 @@
 		36B10E972F84E70C0066A1CB /* TodoApp */ = {
 			isa = PBXGroup;
 			children = (
-				36B10ED92F852BAB0066A1CB /* userDefualt */,
 				36B10ED12F84F4630066A1CB /* customCell */,
 				36B10ECD2F84F3B40066A1CB /* model */,
 				36B10E982F84E70C0066A1CB /* AppDelegate.h */,
@@ -161,13 +160,6 @@
 				36B10ED32F84F4A80066A1CB /* CustomTaskTableViewCell.m */,
 			);
 			path = customCell;
-			sourceTree = "<group>";
-		};
-		36B10ED92F852BAB0066A1CB /* userDefualt */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = userDefualt;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

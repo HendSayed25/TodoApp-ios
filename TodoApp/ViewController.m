@@ -4,11 +4,9 @@
 //
 //  Created by Hend Sayed on 07/04/2026.
 //
-
 #import "ViewController.h"
 #import "Task.h"
 #import "CustomTaskTableViewCell.h"
-#import "TaskDetailsViewController.h"
 
 @interface ViewController ()  <UITableViewDelegate, UITableViewDataSource , UISearchBarDelegate>
 @property (weak, nonatomic) IBOutlet UISearchBar *searchBar;
@@ -24,41 +22,57 @@
 @implementation ViewController
 
 - (IBAction)segmentTab:(UISegmentedControl *)sender {
+    self.searchBar.text = @"";
     [self applySegmentFilter];
 }
 
 - (void)applySegmentFilter {
     NSInteger selectedIndex = self.segemntUI.selectedSegmentIndex;
+    NSString *trimmedText = [[self.searchBar.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] lowercaseString];
 
     if (selectedIndex == 0) {
-        // All — flat list
+        // All
         self.isGroupedByPriority = NO;
-        self.filteredTasks = [NSMutableArray arrayWithArray:self.tasks];
+        [self.filteredTasks removeAllObjects];
+
+        for (Task *task in self.tasks) {
+            if (trimmedText.length == 0 ||
+                [task.name.lowercaseString containsString:trimmedText]) {
+                [self.filteredTasks addObject:task];
+            }
+        }
+
     } else if (selectedIndex == 4) {
-        // Priority — grouped into 3 sections (High / Medium / Low)
-        // Change index 4 to match whichever segment index "Priority" is in your UISegmentedControl
+        // Priority — grouped into 3 sections
         self.isGroupedByPriority = YES;
         [self rebuildTasksByPriority];
+
     } else {
-        // High / Medium / Low — flat filtered list
+        // Filter by state (Todo / In Progress / Done)
         self.isGroupedByPriority = NO;
-        NSString *priority = [self prioritySegmentTitle:selectedIndex];
-        NSPredicate *predicate = [NSPredicate predicateWithBlock:^BOOL(Task *task, NSDictionary *bindings) {
-            return [task.pirority isEqualToString:priority];
-        }];
-        self.filteredTasks = [[self.tasks filteredArrayUsingPredicate:predicate] mutableCopy];
+        NSString *state = [self stateSegmentTitle:selectedIndex];
+        [self.filteredTasks removeAllObjects];
+
+        for (Task *task in self.tasks) {
+            if (![task.state isEqualToString:state]) continue;
+
+            if (trimmedText.length == 0 ||
+                [task.name.lowercaseString containsString:trimmedText]) {
+                [self.filteredTasks addObject:task];
+            }
+        }
     }
 
     [self.tableView reloadData];
     [self updateEmptyState];
 }
 
-- (NSString *)prioritySegmentTitle:(NSInteger)index {
+- (NSString *)stateSegmentTitle:(NSInteger)index {
     switch (index) {
-        case 1: return @"High";
-        case 2: return @"Medium";
-        case 3: return @"Low";
-        default: return @""; // All
+        case 1: return @"Todo";
+        case 2: return @"In Progress";
+        case 3: return @"Done";
+        default: return @"";
     }
 }
 
@@ -82,6 +96,8 @@
 
     self.priorityOrder = @[@"High", @"Medium", @"Low"];
     [self loadTasks];
+    
+    self.searchBar.placeholder = @"Search for tasks...";
 
     if (!self.tasks) {
         self.tasks = [NSMutableArray array];
@@ -98,12 +114,10 @@
     self.navigationItem.rightBarButtonItem = addButton;
 }
 
--(void)addTask {
+- (void)addTask {
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"New Task"
-                                                                   message:@"\n\n\n\n\n\n"
+                                                                   message:@"\n\n\n\n\n\n\n\n"
                                                             preferredStyle:UIAlertControllerStyleAlert];
-
-    alert.view.transform = CGAffineTransformMakeScale(1.1, 1.2);
 
     [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
         textField.placeholder = @"Task Name";
@@ -125,58 +139,67 @@
     priorityControl.translatesAutoresizingMaskIntoConstraints = NO;
     [alert.view addSubview:priorityControl];
 
+    UILabel *dateLabel = [[UILabel alloc] init];
+    dateLabel.text = [NSString stringWithFormat:@"Creation Date: %@", [self getCurrentDateString]];
+    dateLabel.font = [UIFont systemFontOfSize:14];
+    dateLabel.textColor = [UIColor grayColor];
+    dateLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    [alert.view addSubview:dateLabel];
+
     [NSLayoutConstraint activateConstraints:@[
         [priorityLabel.topAnchor constraintEqualToAnchor:alert.view.topAnchor constant:90],
         [priorityLabel.leadingAnchor constraintEqualToAnchor:alert.view.leadingAnchor constant:20],
 
         [priorityControl.topAnchor constraintEqualToAnchor:priorityLabel.bottomAnchor constant:8],
         [priorityControl.centerXAnchor constraintEqualToAnchor:alert.view.centerXAnchor],
-        [priorityControl.widthAnchor constraintEqualToConstant:220]
+        [priorityControl.widthAnchor constraintEqualToConstant:220],
+
+        [dateLabel.topAnchor constraintEqualToAnchor:priorityControl.bottomAnchor constant:8],
+        [dateLabel.centerXAnchor constraintEqualToAnchor:alert.view.centerXAnchor]
     ]];
 
-    UIAlertAction *addAction = [UIAlertAction actionWithTitle:@"Add" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+    UIAlertAction *addAction = [UIAlertAction actionWithTitle:@"Add" style:UIAlertActionStyleDefault
+                                                     handler:^(UIAlertAction * _Nonnull action) {
         NSString *name = alert.textFields[0].text;
         NSString *desc = alert.textFields[1].text;
 
-        if (name.length > 0) {
-            Task *task = [Task new];
-            task.name = name;
-            task.desc = desc;
-            task.dateOfCreation = [self getCurrentDateString];
-            task.state = @"Todo";
+        Task *task = [Task new];
+        task.name = name;
+        task.desc = desc;
+        task.dateOfCreation = [self getCurrentDateString];
+        task.state = @"Todo";
 
-            switch (priorityControl.selectedSegmentIndex) {
-                case 0: task.pirority = @"High"; break;
-                case 1: task.pirority = @"Medium"; break;
-                case 2: task.pirority = @"Low"; break;
-                default: task.pirority = @"Medium"; break;
-            }
-
-            [self.tasks addObject:task];
-
-            if (self.isGroupedByPriority) {
-                [self rebuildTasksByPriority];
-                [self.tableView reloadData];
-            } else {
-                [self.filteredTasks addObject:task];
-                NSIndexPath *newIndexPath = [NSIndexPath indexPathForRow:self.filteredTasks.count - 1 inSection:0];
-                [self.tableView insertRowsAtIndexPaths:@[newIndexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
-            }
-
-            [self saveTasks];
-            [self updateEmptyState];
+        switch (priorityControl.selectedSegmentIndex) {
+            case 0: task.pirority = @"High"; break;
+            case 1: task.pirority = @"Medium"; break;
+            case 2: task.pirority = @"Low"; break;
         }
+
+        [self.tasks addObject:task];
+        [self saveTasks];
+        [self applySegmentFilter]; // rebuilds filteredTasks/tasksByPriority + reloads
+        [self updateEmptyState];
     }];
+
+    addAction.enabled = NO;
 
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil];
 
     [alert addAction:addAction];
     [alert addAction:cancelAction];
 
-    [self presentViewController:alert animated:YES completion:nil];
+    [self presentViewController:alert animated:YES completion:^{
+        UITextField *nameField = alert.textFields[0];
+        [nameField addTarget:self action:@selector(validateTaskName:) forControlEvents:UIControlEventEditingChanged];
+    }];
 }
 
-// MARK: - UITableViewDataSource
+- (void)validateTaskName:(UITextField *)textField {
+    UIAlertController *alert = (UIAlertController *)self.presentedViewController;
+    NSString *name = alert.textFields[0].text;
+    UIAlertAction *addAction = alert.actions.firstObject;
+    addAction.enabled = name.length > 0;
+}
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return self.isGroupedByPriority ? self.priorityOrder.count : 1;
@@ -202,7 +225,6 @@
     }
 
     [cell configureWithTask:task];
-    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     return cell;
 }
 
@@ -247,8 +269,7 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
             }
 
             [self.tasks removeObject:taskToDelete];
-            [self.tableView deleteRowsAtIndexPaths:@[indexPath]
-                                  withRowAnimation:UITableViewRowAnimationAutomatic];
+            [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
 
             [self saveTasks];
             [self updateEmptyState];
@@ -265,73 +286,71 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
     }
 }
 
-// MARK: - Persistence
-
 - (void)saveTasks {
-    NSError *error = nil;
-
     NSData *encodedData = [NSKeyedArchiver archivedDataWithRootObject:self.tasks
-                                                requiringSecureCoding:YES
-                                                                error:&error];
-    if (error) {
-        NSLog(@"Encode error: %@", error);
-        return;
-    }
-
+                                                 requiringSecureCoding:YES
+                                                                 error:nil];
     [[NSUserDefaults standardUserDefaults] setObject:encodedData forKey:@"tasks"];
-    [[NSUserDefaults standardUserDefaults] synchronize];
-
-    // Keep grouped view in sync after any save
-    if (self.isGroupedByPriority) {
-        [self rebuildTasksByPriority];
-    }
-
     NSLog(@"Saved tasks successfully");
 }
 
 - (void)loadTasks {
     NSData *data = [[NSUserDefaults standardUserDefaults] objectForKey:@"tasks"];
-    NSLog(@"data: %@", data);
 
     if (data) {
-        NSArray<Task *> *savedTasks = [NSKeyedUnarchiver unarchivedObjectOfClasses:[NSSet setWithObjects:[NSArray class], [Task class], nil] fromData:data error:nil];
+        NSArray<Task *> *savedTasks = [NSKeyedUnarchiver unarchivedObjectOfClasses:[NSSet setWithObjects:[NSArray class], [Task class], nil]
+                                                                          fromData:data
+                                                                             error:nil];
         if (savedTasks) {
             self.tasks = [savedTasks mutableCopy];
         }
     }
 }
 
-// MARK: - Search
-
 - (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
+    searchBar.placeholder = @"Search tasks...";
 
-    if (self.isGroupedByPriority) {
-        // Rebuild with search filter applied per section
+    NSString *trimmedText = [searchText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    NSInteger selectedIndex = self.segemntUI.selectedSegmentIndex;
+
+    if (selectedIndex == 4) { // Priority segment
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+
         for (NSString *p in self.priorityOrder) {
             NSMutableArray *filtered = [NSMutableArray array];
+
             for (Task *task in self.tasks) {
                 if (![task.pirority isEqualToString:p]) continue;
-                if (searchText.length == 0 ||
-                    [task.name.lowercaseString containsString:searchText.lowercaseString] ||
-                    [task.desc.lowercaseString containsString:searchText.lowercaseString]) {
+
+                if (trimmedText.length == 0 ||
+                    [task.name.lowercaseString containsString:trimmedText.lowercaseString]) {
                     [filtered addObject:task];
                 }
             }
             dict[p] = filtered;
         }
         self.tasksByPriority = [dict copy];
-    } else {
+
+    } else if (selectedIndex == 0) { // All tasks
         [self.filteredTasks removeAllObjects];
 
-        if (searchText.length == 0) {
-            [self.filteredTasks addObjectsFromArray:self.tasks];
-        } else {
-            for (Task *task in self.tasks) {
-                if ([task.name.lowercaseString containsString:searchText.lowercaseString] ||
-                    [task.desc.lowercaseString containsString:searchText.lowercaseString]) {
-                    [self.filteredTasks addObject:task];
-                }
+        for (Task *task in self.tasks) {
+            if (trimmedText.length == 0 ||
+                [task.name.lowercaseString containsString:trimmedText.lowercaseString]) {
+                [self.filteredTasks addObject:task];
+            }
+        }
+
+    } else { // State segments: Todo / In Progress / Done
+        NSString *state = [self stateSegmentTitle:selectedIndex];
+        [self.filteredTasks removeAllObjects];
+
+        for (Task *task in self.tasks) {
+            if (![task.state isEqualToString:state]) continue;
+
+            if (trimmedText.length == 0 ||
+                [task.name.lowercaseString containsString:trimmedText.lowercaseString]) {
+                [self.filteredTasks addObject:task];
             }
         }
     }
@@ -339,8 +358,6 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
     [self.tableView reloadData];
     [self updateEmptyState];
 }
-
-// MARK: - Empty State
 
 - (void)updateEmptyState {
     BOOL isEmpty;
@@ -367,8 +384,6 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
     }
 }
 
-// MARK: - Row Selection
-
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     Task *task;
     if (self.isGroupedByPriority) {
@@ -383,7 +398,7 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
 - (void)showEditAlertForTask:(Task *)task indexPath:(NSIndexPath *)indexPath {
 
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Edit Task"
-                                                                   message:@"\n\n\n\n\n\n\n\n\n\n"
+                                                                   message:@"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
                                                             preferredStyle:UIAlertControllerStyleAlert];
 
     [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
@@ -426,34 +441,26 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
         [stateControl setEnabled:NO forSegmentAtIndex:0];
         [stateControl setEnabled:NO forSegmentAtIndex:1];
     }
-
     stateControl.translatesAutoresizingMaskIntoConstraints = NO;
     [alert.view addSubview:stateControl];
 
-    [NSLayoutConstraint activateConstraints:@[
-        [priorityLabel.topAnchor constraintEqualToAnchor:alert.view.topAnchor constant:90],
-        [priorityLabel.leadingAnchor constraintEqualToAnchor:alert.view.leadingAnchor constant:20],
+    UILabel *dateLabel = [[UILabel alloc] init];
+    dateLabel.text = [NSString stringWithFormat:@"Creation Date: %@", task.dateOfCreation];
+    dateLabel.font = [UIFont systemFontOfSize:14];
+    dateLabel.textColor = [UIColor grayColor];
+    dateLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    [alert.view addSubview:dateLabel];
 
-        [priorityControl.topAnchor constraintEqualToAnchor:priorityLabel.bottomAnchor constant:5],
-        [priorityControl.centerXAnchor constraintEqualToAnchor:alert.view.centerXAnchor],
-        [priorityControl.widthAnchor constraintEqualToConstant:220],
-
-        [stateLabel.topAnchor constraintEqualToAnchor:priorityControl.bottomAnchor constant:10],
-        [stateLabel.leadingAnchor constraintEqualToAnchor:alert.view.leadingAnchor constant:20],
-
-        [stateControl.topAnchor constraintEqualToAnchor:stateLabel.bottomAnchor constant:5],
-        [stateControl.centerXAnchor constraintEqualToAnchor:alert.view.centerXAnchor],
-        [stateControl.widthAnchor constraintEqualToConstant:220]
-    ]];
-
-    UIAlertAction *updateAction = [UIAlertAction actionWithTitle:@"Update" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-
+    UIAlertAction *updateAction = [UIAlertAction actionWithTitle:@"Update"
+                                                           style:UIAlertActionStyleDefault
+                                                         handler:^(UIAlertAction * _Nonnull action) {
         UIAlertController *confirm = [UIAlertController alertControllerWithTitle:@"Confirm Update"
                                                                          message:@"Are you sure you want to save changes to this task?"
                                                                   preferredStyle:UIAlertControllerStyleAlert];
 
-        UIAlertAction *yesAction = [UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-
+        UIAlertAction *yesAction = [UIAlertAction actionWithTitle:@"Yes"
+                                                            style:UIAlertActionStyleDefault
+                                                          handler:^(UIAlertAction * _Nonnull action) {
             NSString *newName = alert.textFields[0].text;
             NSString *newDesc = alert.textFields[1].text;
 
@@ -473,33 +480,60 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
                     case 2: task.state = @"Done"; break;
                 }
 
-                if (self.isGroupedByPriority) {
-                    [self rebuildTasksByPriority];
-                    [self.tableView reloadData];
-                } else {
-                    [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
-                }
-
                 [self saveTasks];
+                [self applySegmentFilter]; // rebuilds + reloads correctly
+                [self updateEmptyState];
             }
         }];
 
-        UIAlertAction *noAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil];
-
+        UIAlertAction *noAction = [UIAlertAction actionWithTitle:@"Cancel"
+                                                           style:UIAlertActionStyleCancel
+                                                         handler:nil];
         [confirm addAction:yesAction];
         [confirm addAction:noAction];
         [self presentViewController:confirm animated:YES completion:nil];
     }];
 
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel"
+                                                           style:UIAlertActionStyleCancel
+                                                         handler:nil];
+
+    updateAction.enabled = (task.name.length > 0);
 
     [alert addAction:updateAction];
     [alert addAction:cancelAction];
 
-    [self presentViewController:alert animated:YES completion:nil];
+    [NSLayoutConstraint activateConstraints:@[
+        [priorityLabel.topAnchor constraintEqualToAnchor:alert.view.topAnchor constant:130],
+        [priorityLabel.leadingAnchor constraintEqualToAnchor:alert.view.leadingAnchor constant:20],
+
+        [priorityControl.topAnchor constraintEqualToAnchor:priorityLabel.bottomAnchor constant:10],
+        [priorityControl.centerXAnchor constraintEqualToAnchor:alert.view.centerXAnchor],
+        [priorityControl.widthAnchor constraintEqualToConstant:220],
+
+        [stateLabel.topAnchor constraintEqualToAnchor:priorityControl.bottomAnchor constant:15],
+        [stateLabel.leadingAnchor constraintEqualToAnchor:alert.view.leadingAnchor constant:20],
+
+        [stateControl.topAnchor constraintEqualToAnchor:stateLabel.bottomAnchor constant:8],
+        [stateControl.centerXAnchor constraintEqualToAnchor:alert.view.centerXAnchor],
+        [stateControl.widthAnchor constraintEqualToConstant:220],
+
+        [dateLabel.topAnchor constraintEqualToAnchor:stateControl.bottomAnchor constant:20],
+        [dateLabel.centerXAnchor constraintEqualToAnchor:alert.view.centerXAnchor]
+    ]];
+
+    [self presentViewController:alert animated:YES completion:^{
+        UITextField *nameField = alert.textFields[0];
+        [nameField addTarget:self action:@selector(textFieldDidChange:) forControlEvents:UIControlEventEditingChanged];
+    }];
 }
 
-// MARK: - Helpers
+- (void)textFieldDidChange:(UITextField *)textField {
+    UIAlertController *alert = (UIAlertController *)self.presentedViewController;
+    if (!alert) return;
+    UIAlertAction *updateAction = alert.actions.firstObject;
+    updateAction.enabled = textField.text.length > 0;
+}
 
 - (NSString *)getCurrentDateString {
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
